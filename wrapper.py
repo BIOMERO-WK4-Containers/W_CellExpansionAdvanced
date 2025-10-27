@@ -1,7 +1,7 @@
 import sys
 import os
 import shutil
-import imageio
+import imageio.v2 as imageio
 import numpy as np
 import skimage
 from biaflows import CLASS_SPTCNT
@@ -18,6 +18,20 @@ def _derive_output_filename(original_filename: str, label_name: str) -> str:
     return f"{name}_{label_name}{ext}"
 
 
+def _clear_directory(directory: str) -> None:
+    """Remove all content inside directory without deleting the directory itself."""
+    if not os.path.isdir(directory):
+        return
+    for entry in os.scandir(directory):
+        try:
+            if entry.is_dir(follow_symlinks=False):
+                shutil.rmtree(entry.path, ignore_errors=True)
+            else:
+                os.remove(entry.path)
+        except OSError as exc:  # keep going if a file is busy
+            print(f"Warning: could not remove {entry.path}: {exc}")
+
+
 def main(argv):
     with BiaflowsJob.from_cli(argv) as bj:
         
@@ -27,8 +41,9 @@ def main(argv):
         # 1a. Get folders
         in_imgs, gt_imgs, in_path, gt_path, out_path, tmp_path = prepare_data(
             get_discipline(bj, default=CLASS_SPTCNT), bj, is_2d=True, **bj.flags)
-        # 1b. MAKE SURE TMP PATH IS UNIQUE
-        tmp_path = gt_path
+        # 1b. Ensure we have a dedicated temporary directory scoped to this run
+        tmp_path = os.path.join(tmp_path, "cell_expansion_tmp")
+        os.makedirs(tmp_path, exist_ok=True)
         # 1c. Read parameters from commandline
         maxpixels = bj.parameters.max_pixels
         discardcellswithoutcytoplasm = bj.parameters.discard_cells_without_cytoplasm
@@ -85,7 +100,7 @@ def main(argv):
 
         # 3. Pipeline finished
         # 3a. cleanup tmp
-        shutil.rmtree(tmp_path)  
+        _clear_directory(tmp_path)
         print("Finished.")
 
 
