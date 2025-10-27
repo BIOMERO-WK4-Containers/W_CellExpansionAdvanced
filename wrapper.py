@@ -10,6 +10,14 @@ from biaflows.helpers import BiaflowsJob, prepare_data, get_discipline
 from pyCellExpansion import CellExpansion
 
 
+def _derive_output_filename(original_filename: str, label_name: str) -> str:
+    """Create an output filename by replacing the Nuclei token when present."""
+    if "Nuclei" in original_filename:
+        return original_filename.replace("Nuclei", label_name)
+    name, ext = os.path.splitext(original_filename)
+    return f"{name}_{label_name}{ext}"
+
+
 def main(argv):
     with BiaflowsJob.from_cli(argv) as bj:
         
@@ -52,20 +60,28 @@ def main(argv):
                 imCellsNucleiLabels=imCellsNucleiLabels,
                 discardcellswithoutcytoplasm=discardcellswithoutcytoplasm,
                 maxpixels=maxpixels)
-            # Write intermediate results
-            imageio.imwrite(
-                os.path.join(tmp_path,
-                             bfimg.filename.replace("Nuclei", "Cells")),
-                imCellsCellLabels)
-            print(f"Wrote expanded cell mask to {tmp_path}")
+            # Write intermediate results for nuclei, cell, and cytoplasm labels
+            output_arrays = {
+                "Cells": imCellsCellLabels,
+                "NucleiLabels": imCellsNucleiLabels,
+                "Cytoplasm": imCellsCytoplasmLabels,
+            }
+            for label_name, data in output_arrays.items():
+                output_filename = _derive_output_filename(bfimg.filename, label_name)
+                imageio.imwrite(os.path.join(tmp_path, output_filename), data)
+                print(f"Wrote {label_name} mask to {tmp_path}")
 
         # 2b. Copy to out folder when we're done
         for bimg in in_imgs:
-            shutil.copy(
-                os.path.join(tmp_path, 
-                             bimg.filename.replace("Nuclei", "Cells")),
-                out_path)
-            print(f"Copied tmp files to {out_path}")
+            for label_name in ("Cells", "NucleiLabels", "Cytoplasm"):
+                src_path = os.path.join(
+                    tmp_path,
+                    _derive_output_filename(bimg.filename, label_name))
+                if os.path.exists(src_path):
+                    shutil.copy(src_path, out_path)
+                    print(f"Copied {label_name} mask to {out_path}")
+                else:
+                    print(f"Warning: expected {label_name} mask missing for {bimg.filename}")
 
         # 3. Pipeline finished
         # 3a. cleanup tmp
