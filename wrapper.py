@@ -7,7 +7,7 @@ import skimage
 from biaflows import CLASS_SPTCNT
 from biaflows.helpers import BiaflowsJob, prepare_data, get_discipline
 # code for workflow:
-from pyCellExpansion import CellExpansion
+from pyCellExpansionAdvanced import CellExpansion
 
 
 def _derive_output_filename(original_filename: str, label_name: str) -> str:

@@ -29,7 +29,7 @@ RUN pip install opencv-python-headless==4.5.5.64 \
 
 ADD wrapper.py /app/wrapper.py
 # for running the wrapper locally
-ADD pyCellExpansion.py /app/pyCellExpansion.py
+ADD pyCellExpansionAdvanced.py /app/pyCellExpansionAdvanced.py
 ADD descriptor.json /app/descriptor.json
 
 ENTRYPOINT ["python3.7","/app/wrapper.py"]
