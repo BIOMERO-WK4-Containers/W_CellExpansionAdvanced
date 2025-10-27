@@ -169,25 +169,19 @@ def _parse_args(argv: Sequence[str]) -> argparse.Namespace:
         dest="temp_dir",
         help="Compatibility alias for --temp-dir.",
     )
-    parser.add_argument("--max-pixels", type=int, default=25)
-    parser.add_argument(
-        "--discard-cells-without-cytoplasm",
-        type=_parse_bool,
-        default=True,
-    )
-    parser.add_argument(
-        "--local",
-        action="store_true",
-        help="Compatibility flag ignored by the local runner.",
-    )
+
     parser.add_argument(
         "--suffix",
         dest="suffixes",
         action="append",
         help="Restrict processing to files matching this extension (can be repeated).",
     )
+    parser.add_argument(
+        "--local",
+        action="store_true",
+        help="Compatibility flag ignored by the local runner.",
+    )
     parsed = parser.parse_args(argv)
-    # ensure defaults for aliases
     if parsed.input_dir is None:
         parsed.input_dir = DEFAULT_INPUT_DIR
     if parsed.output_dir is None:

@@ -1,14 +1,19 @@
+import argparse
 import sys
 import os
 import shutil
 import imageio.v2 as imageio
 import numpy as np
 import skimage
-from bioflows_local import CLASS_SPTCNT
-from bioflows_local import BiaflowsJob, prepare_data, get_discipline
+from bioflows_local import (
+    CLASS_SPTCNT,
+    BiaflowsJob,
+    prepare_data,
+    get_discipline,
+    _parse_bool,
+)
 # code for workflow:
 from pyCellExpansionAdvanced import CellExpansion
-
 
 def _derive_output_filename(original_filename: str, label_name: str) -> str:
     """Create an output filename by replacing the Nuclei token when present."""
@@ -30,10 +35,26 @@ def _clear_directory(directory: str) -> None:
                 os.remove(entry.path)
         except OSError as exc:  # keep going if a file is busy
             print(f"Warning: could not remove {entry.path}: {exc}")
-
+            
+def _parse_cli_args(argv: list[str]):
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--max-pixels", "--max_pixels", dest="max_pixels", type=int)
+    parser.add_argument(
+        "--discard-cells-without-cytoplasm",
+        "--discard_cells_without_cytoplasm",
+        dest="discard_cells_without_cytoplasm",
+        type=_parse_bool,
+    )
+    args, remaining = parser.parse_known_args(argv)
+    return args, remaining
 
 def main(argv):
-    with BiaflowsJob.from_cli(argv) as bj:
+    overrides, remaining = _parse_cli_args(argv)
+    with BiaflowsJob.from_cli(remaining) as bj:
+        if getattr(overrides, "max_pixels", None) is not None:
+            bj.parameters.max_pixels = overrides.max_pixels
+        if getattr(overrides, "discard_cells_without_cytoplasm", None) is not None:
+            bj.parameters.discard_cells_without_cytoplasm = overrides.discard_cells_without_cytoplasm
         
         print("Initialisation...")
 
