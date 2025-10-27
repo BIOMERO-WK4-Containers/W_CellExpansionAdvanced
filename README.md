@@ -20,7 +20,7 @@ docker build -t w_cellexpansionadvanced .
 Tag additional versions as required, for example:
 
 ```cmd
-docker tyourdockerhub/w_cellexpansionadvanced:v1.0.1
+docker tag yourdockerhub/w_cellexpansionadvanced:v1.0.1
 docker push yourdockerhub/w_cellexpansionadvanced:v1.0.1
 docker tag yourdockerhub/w_cellexpansionadvanced:latest
 docker push yourdockerhub/w_cellexpansionadvanced:latest

@@ -4,8 +4,8 @@ import shutil
 import imageio.v2 as imageio
 import numpy as np
 import skimage
-from biaflows import CLASS_SPTCNT
-from biaflows.helpers import BiaflowsJob, prepare_data, get_discipline
+from bioflows_local import CLASS_SPTCNT
+from bioflows_local import BiaflowsJob, prepare_data, get_discipline
 # code for workflow:
 from pyCellExpansionAdvanced import CellExpansion
 

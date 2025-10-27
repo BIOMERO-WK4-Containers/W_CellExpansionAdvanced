@@ -5,57 +5,12 @@
     "image": "cellularimagingcf/w_cellexpansionadvanced",
     "type": "singularity"
   },
-    "command-line": "python wrapper.py CYTOMINE_HOST CYTOMINE_PUBLIC_KEY CYTOMINE_PRIVATE_KEY CYTOMINE_ID_PROJECT CYTOMINE_ID_SOFTWARE MAX_PIXELS DISCARD_CELLS_WITHOUT_CYTOPLASM",
+  "command-line": "python wrapper.py --max-pixels @max_pixels --discard-cells-without-cytoplasm @discard_cells_without_cytoplasm",
   "inputs": [
     {
-      "id": "cytomine_host",
-      "value-key": "@ID",
-      "command-line-flag": "--@id",
-      "name": "Cytomine host",
-      "set-by-server": true,
-      "optional": false,
-      "type": "String"
-    },
-    {
-      "id": "cytomine_public_key",
-      "value-key": "@ID",
-      "command-line-flag": "--@id",
-      "name": "Cytomine public key",
-      "set-by-server": true,
-      "optional": false,
-      "type": "String"
-    },
-    {
-      "id": "cytomine_private_key",
-      "value-key": "@ID",
-      "command-line-flag": "--@id",
-      "name": "Cytomine private key",
-      "set-by-server": true,
-      "optional": false,
-      "type": "String"
-    },
-    {
-      "id": "cytomine_id_project",
-      "value-key": "@ID",
-      "command-line-flag": "--@id",
-      "name": "Cytomine project ID",
-      "set-by-server": true,
-      "optional": false,
-      "type": "Number"
-    },
-    {
-      "id": "cytomine_id_software",
-      "value-key": "@ID",
-      "command-line-flag": "--@id",
-      "name": "Cytomine software ID",
-      "set-by-server": true,
-      "optional": false,
-      "type": "Number"
-    },
-    {
       "id": "max_pixels",
-      "value-key": "@ID",
-      "command-line-flag": "--@id",
+      "value-key": "@max_pixels",
+      "command-line-flag": "--max-pixels",
       "name": "Max pixels",
       "description": "Max pixels to expand the cell with",
       "default-value": 25,
@@ -65,8 +20,8 @@
     },
     {
       "id": "discard_cells_without_cytoplasm",
-      "value-key": "@ID",
-      "command-line-flag": "--@id",
+      "value-key": "@discard_cells_without_cytoplasm",
+      "command-line-flag": "--discard-cells-without-cytoplasm",
       "name": "Discard cells without Cytoplasm?",
 	    "description": "If true, we will discard cells without cytoplasm",
       "default-value": true,
