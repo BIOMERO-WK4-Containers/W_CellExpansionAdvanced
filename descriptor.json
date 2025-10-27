@@ -2,7 +2,7 @@
   "name": "CellExpansionAdvanced",
   "description": "2D Cell Expansion of Nuceli Annotations with advanced options",
   "container-image": {
-    "image": "cellularimagingcf/w_cellexpansionadvance:v1.01",
+    "image": "cellularimagingcf/w_cellexpansionadvanced",
     "type": "singularity"
   },
     "command-line": "python wrapper.py CYTOMINE_HOST CYTOMINE_PUBLIC_KEY CYTOMINE_PRIVATE_KEY CYTOMINE_ID_PROJECT CYTOMINE_ID_SOFTWARE MAX_PIXELS DISCARD_CELLS_WITHOUT_CYTOPLASM",
