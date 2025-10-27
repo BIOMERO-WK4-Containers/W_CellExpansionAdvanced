@@ -2,18 +2,18 @@ import argparse
 import sys
 import os
 import shutil
+from types import SimpleNamespace
+from typing import List, Sequence, Tuple
+
 import imageio.v2 as imageio
 import numpy as np
 import skimage
-from bioflows_local import (
-    CLASS_SPTCNT,
-    BiaflowsJob,
-    prepare_data,
-    get_discipline,
-    _parse_bool,
-)
+from bioflows_local import CLASS_SPTCNT, BiaflowsJob, prepare_data, get_discipline
 # code for workflow:
 from pyCellExpansionAdvanced import CellExpansion
+
+DEFAULT_MAX_PIXELS = 25
+DEFAULT_DISCARD_WITHOUT_CYTOPLASM = True
 
 def _derive_output_filename(original_filename: str, label_name: str) -> str:
     """Create an output filename by replacing the Nuclei token when present."""
@@ -36,7 +36,20 @@ def _clear_directory(directory: str) -> None:
         except OSError as exc:  # keep going if a file is busy
             print(f"Warning: could not remove {entry.path}: {exc}")
             
-def _parse_cli_args(argv: list[str]):
+def _parse_bool(value) -> bool:
+    if isinstance(value, bool):
+        return value
+    truthy = {"true", "1", "yes", "y", "on"}
+    falsy = {"false", "0", "no", "n", "off"}
+    normalised = value.strip().lower()
+    if normalised in truthy:
+        return True
+    if normalised in falsy:
+        return False
+    raise argparse.ArgumentTypeError(f"Cannot interpret '{value}' as a boolean.")
+
+
+def _parse_cli_args(argv: Sequence[str]) -> Tuple[argparse.Namespace, List[str]]:
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--max-pixels", "--max_pixels", dest="max_pixels", type=int)
     parser.add_argument(
@@ -46,15 +59,23 @@ def _parse_cli_args(argv: list[str]):
         type=_parse_bool,
     )
     args, remaining = parser.parse_known_args(argv)
-    return args, remaining
+    if args.max_pixels is None:
+        args.max_pixels = DEFAULT_MAX_PIXELS
+    if args.discard_cells_without_cytoplasm is None:
+        args.discard_cells_without_cytoplasm = DEFAULT_DISCARD_WITHOUT_CYTOPLASM
+    return args, list(remaining)
 
 def main(argv):
     overrides, remaining = _parse_cli_args(argv)
-    with BiaflowsJob.from_cli(remaining) as bj:
-        if getattr(overrides, "max_pixels", None) is not None:
-            bj.parameters.max_pixels = overrides.max_pixels
-        if getattr(overrides, "discard_cells_without_cytoplasm", None) is not None:
-            bj.parameters.discard_cells_without_cytoplasm = overrides.discard_cells_without_cytoplasm
+    parameters = SimpleNamespace(
+        max_pixels=int(overrides.max_pixels),
+        discard_cells_without_cytoplasm=bool(
+            overrides.discard_cells_without_cytoplasm
+        ),
+    )
+    with BiaflowsJob.from_cli(remaining, parameters=parameters) as bj:
+        maxpixels = parameters.max_pixels
+        discardcellswithoutcytoplasm = parameters.discard_cells_without_cytoplasm
         
         print("Initialisation...")
 
@@ -65,9 +86,7 @@ def main(argv):
         # 1b. Ensure we have a dedicated temporary directory scoped to this run
         tmp_path = os.path.join(tmp_path, "cell_expansion_tmp")
         os.makedirs(tmp_path, exist_ok=True)
-        # 1c. Read parameters from commandline
-        maxpixels = bj.parameters.max_pixels
-        discardcellswithoutcytoplasm = bj.parameters.discard_cells_without_cytoplasm
+    # 1c. Read parameters from commandline
         print(f"Parameters: Max pixels: {maxpixels} |\
                 Require cyto: {discardcellswithoutcytoplasm}")
 

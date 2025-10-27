@@ -9,6 +9,16 @@ from typing import List, Optional, Sequence
 
 CLASS_SPTCNT = "LOCAL_CLASS_SPTCNT"
 
+KNOWN_JOB_ATTRS = {
+    "input_dir",
+    "output_dir",
+    "gt_dir",
+    "temp_dir",
+    "suffixes",
+    "local",
+    "parameters",
+}
+
 DEFAULT_INPUT_DIR = os.environ.get("CELL_EXPANSION_INPUT_DIR", "infolder")
 DEFAULT_OUTPUT_DIR = os.environ.get("CELL_EXPANSION_OUTPUT_DIR", "outfolder")
 DEFAULT_GT_DIR = os.environ.get("CELL_EXPANSION_GT_DIR", "gtfolder")
@@ -43,11 +53,23 @@ class ImageResource:
 class BiaflowsJob:
     """Local stand-in for the Cytomine/BIAFLOWS job helper."""
 
-    def __init__(self, args: argparse.Namespace) -> None:
-        self.parameters = SimpleNamespace(
-            max_pixels=int(args.max_pixels),
-            discard_cells_without_cytoplasm=bool(args.discard_cells_without_cytoplasm),
-        )
+    def __init__(
+        self,
+        args: argparse.Namespace,
+        *,
+        parameters: Optional[SimpleNamespace] = None,
+    ) -> None:
+        if parameters is None:
+            parameters = getattr(args, "parameters", None)
+        if parameters is None:
+            param_values = {
+                key: value
+                for key, value in vars(args).items()
+                if key not in KNOWN_JOB_ATTRS
+            }
+            parameters = SimpleNamespace(**param_values)
+
+        self.parameters = parameters
         self.flags = {}
         self.input_dir = Path(args.input_dir)
         self.output_dir = Path(args.output_dir)
@@ -62,9 +84,19 @@ class BiaflowsJob:
         return False
 
     @classmethod
-    def from_cli(cls, argv: Sequence[str]) -> "BiaflowsJob":
+    def from_cli(
+        cls,
+        argv: Sequence[str],
+        **overrides,
+    ) -> "BiaflowsJob":
         args = _parse_args(argv)
-        return cls(args)
+        parameters = overrides.pop(
+            "parameters",
+            getattr(args, "parameters", None),
+        )
+        for key, value in overrides.items():
+            setattr(args, key, value)
+        return cls(args, parameters=parameters)
 
     @staticmethod
     def _normalise_suffixes(
@@ -140,8 +172,6 @@ def _collect_images(directory: Path, suffixes: Optional[Sequence[str]]) -> List[
 
 
 def _parse_args(argv: Sequence[str]) -> argparse.Namespace:
-    if _looks_like_legacy(argv):
-        return _parse_legacy(argv)
     parser = argparse.ArgumentParser(
         description="Local runner for the Cell Expansion workflow (no Cytomine dependencies)."
     )
@@ -169,7 +199,6 @@ def _parse_args(argv: Sequence[str]) -> argparse.Namespace:
         dest="temp_dir",
         help="Compatibility alias for --temp-dir.",
     )
-
     parser.add_argument(
         "--suffix",
         dest="suffixes",
@@ -191,28 +220,6 @@ def _parse_args(argv: Sequence[str]) -> argparse.Namespace:
     if parsed.temp_dir is None:
         parsed.temp_dir = DEFAULT_TEMP_DIR
     return parsed
-
-
-def _parse_legacy(argv: Sequence[str]) -> argparse.Namespace:
-    max_pixels = int(argv[5])
-    discard = _parse_bool(argv[6])
-    return argparse.Namespace(
-        input_dir=DEFAULT_INPUT_DIR,
-        output_dir=DEFAULT_OUTPUT_DIR,
-        gt_dir=DEFAULT_GT_DIR,
-        temp_dir=DEFAULT_TEMP_DIR,
-        max_pixels=max_pixels,
-        discard_cells_without_cytoplasm=discard,
-        suffixes=list(DEFAULT_SUFFIXES),
-    )
-
-
-def _looks_like_legacy(argv: Sequence[str]) -> bool:
-    if len(argv) < 7:
-        return False
-    first_segment = argv[:7]
-    return all(not argument.startswith("--") for argument in first_segment)
-
 
 def _parse_bool(value):
     if isinstance(value, bool):
