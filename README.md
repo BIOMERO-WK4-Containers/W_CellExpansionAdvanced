@@ -14,15 +14,16 @@ Containerised workflow for 2D cell expansion segmentation, based on the algorith
 ## Building the Container
 
 ```cmd
-docker build -t biomero-wk4-containers/w_cellexpansionadvanced:latest .
+docker build -t w_cellexpansionadvanced .
 ```
 
 Tag additional versions as required, for example:
 
 ```cmd
-docker tag biomero-wk4-containers/w_cellexpansionadvanced:latest biomero-wk4-containers/w_cellexpansionadvanced:v1.0.1
-docker push biomero-wk4-containers/w_cellexpansionadvanced:v1.0.1
-docker push biomero-wk4-containers/w_cellexpansionadvanced:latest
+docker tyourdockerhub/w_cellexpansionadvanced:v1.0.1
+docker push yourdockerhub/w_cellexpansionadvanced:v1.0.1
+docker tag yourdockerhub/w_cellexpansionadvanced:latest
+docker push yourdockerhub/w_cellexpansionadvanced:latest
 ```
 
 Ensure `descriptor.json` references the same registry path when publishing a release.
@@ -47,7 +48,7 @@ docker run --rm ^
     -v "%DATA_PATH%\infolder:/data/in" ^
     -v "%DATA_PATH%\outfolder:/data/out" ^
     -v "%DATA_PATH%\gtfolder:/data/gt" ^
-    biomero-wk4-containers/w_cellexpansionadvanced:latest ^
+    yourdockerhub/w_cellexpansionadvanced:latest ^
     --infolder /data/in ^
     --outfolder /data/out ^
     --gtfolder /data/gt ^
