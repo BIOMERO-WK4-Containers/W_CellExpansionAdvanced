@@ -19,13 +19,6 @@ KNOWN_JOB_ATTRS = {
     "parameters",
 }
 
-DEFAULT_INPUT_DIR = os.environ.get("CELL_EXPANSION_INPUT_DIR", "infolder")
-DEFAULT_OUTPUT_DIR = os.environ.get("CELL_EXPANSION_OUTPUT_DIR", "outfolder")
-DEFAULT_GT_DIR = os.environ.get("CELL_EXPANSION_GT_DIR", "gtfolder")
-DEFAULT_TEMP_DIR = os.environ.get(
-    "CELL_EXPANSION_TEMP_DIR",
-    os.path.join(DEFAULT_OUTPUT_DIR, "tmp"),
-)
 DEFAULT_SUFFIXES = (
     ".tif",
     ".tiff",
@@ -74,7 +67,12 @@ class BiaflowsJob:
         self.input_dir = Path(args.input_dir)
         self.output_dir = Path(args.output_dir)
         self.gt_dir = Path(args.gt_dir)
-        self.temp_dir = Path(args.temp_dir)
+
+        temp_dir_value = getattr(args, "temp_dir", None)
+        if temp_dir_value is None:
+            # Mirror the behaviour of the hosted runner where a temp folder is optional.
+            temp_dir_value = self.output_dir / "tmp"
+        self.temp_dir = Path(temp_dir_value)
         self.suffixes = self._normalise_suffixes(args.suffixes)
 
     def __enter__(self) -> "BiaflowsJob":
@@ -175,25 +173,25 @@ def _parse_args(argv: Sequence[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Local runner for the Cell Expansion workflow (no Cytomine dependencies)."
     )
-    parser.add_argument("--input-dir", dest="input_dir", default=DEFAULT_INPUT_DIR)
+    parser.add_argument("--input-dir", dest="input_dir")
     parser.add_argument(
         "--infolder",
         dest="input_dir",
         help="Compatibility alias for --input-dir.",
     )
-    parser.add_argument("--output-dir", dest="output_dir", default=DEFAULT_OUTPUT_DIR)
+    parser.add_argument("--output-dir", dest="output_dir")
     parser.add_argument(
         "--outfolder",
         dest="output_dir",
         help="Compatibility alias for --output-dir.",
     )
-    parser.add_argument("--gt-dir", dest="gt_dir", default=DEFAULT_GT_DIR)
+    parser.add_argument("--gt-dir", dest="gt_dir")
     parser.add_argument(
         "--gtfolder",
         dest="gt_dir",
         help="Compatibility alias for --gt-dir.",
     )
-    parser.add_argument("--temp-dir", dest="temp_dir", default=DEFAULT_TEMP_DIR)
+    parser.add_argument("--temp-dir", dest="temp_dir")
     parser.add_argument(
         "--tmpfolder",
         dest="temp_dir",
@@ -211,14 +209,6 @@ def _parse_args(argv: Sequence[str]) -> argparse.Namespace:
         help="Compatibility flag ignored by the local runner.",
     )
     parsed = parser.parse_args(argv)
-    if parsed.input_dir is None:
-        parsed.input_dir = DEFAULT_INPUT_DIR
-    if parsed.output_dir is None:
-        parsed.output_dir = DEFAULT_OUTPUT_DIR
-    if parsed.gt_dir is None:
-        parsed.gt_dir = DEFAULT_GT_DIR
-    if parsed.temp_dir is None:
-        parsed.temp_dir = DEFAULT_TEMP_DIR
     return parsed
 
 def _parse_bool(value):
