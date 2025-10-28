@@ -19,13 +19,13 @@ def CellExpansion(imCellsNucleiLabels,maxpixels,discardcellswithoutcytoplasm):
         Be sure to install:
         pip install opencv-python
         pip install numpy
-        pip install pykdtree         (for pykdtree.kdtree.KDTree)
+        pip install scipy            (for scipy.spatial.cKDTree)
         pip install scikit-image     (for skimage.segmentation.relabel_sequential)
         pip install ismember         (for ismember.ismember)
     """
     import cv2
     import numpy as np
-    from pykdtree.kdtree import KDTree as pyKDTree
+    from scipy.spatial import cKDTree
     from skimage.segmentation import relabel_sequential
     from ismember import ismember
 
@@ -43,7 +43,7 @@ def CellExpansion(imCellsNucleiLabels,maxpixels,discardcellswithoutcytoplasm):
     LabelCoords=np.argwhere(imCellsNucleiLabels)
 
     # Search Which Label Coords are Nearest to a distance pixel Coords
-    tree=pyKDTree(LabelCoords)
+    tree=cKDTree(LabelCoords)
     nearest_ind=tree.query(NucleiDistCoords, k=1)[1]
 
     # Convert Nearest Label and Pixel Coords (x,y) to indices (number)
