@@ -16,6 +16,6 @@ WORKDIR /app
 ADD bioflows_local.py /app/bioflows_local.py
 ADD wrapper.py /app/wrapper.py
 ADD pyCellExpansionAdvanced.py /app/pyCellExpansionAdvanced.py
-# ADD descriptor.json /app/descriptor.json
+ADD descriptor.json /app/descriptor.json
 
 ENTRYPOINT ["python3.12", "/app/wrapper.py"]

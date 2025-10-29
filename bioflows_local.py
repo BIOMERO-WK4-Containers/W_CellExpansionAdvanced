@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -28,6 +29,23 @@ DEFAULT_SUFFIXES = (
     ".bmp",
     ".npy",
 )
+
+
+def _load_descriptor_inputs() -> List[dict]:
+    """Return parameter definitions declared in descriptor.json if available."""
+    descriptor_path = Path(__file__).with_name("descriptor.json")
+    try:
+        with descriptor_path.open("r", encoding="utf-8") as stream:
+            descriptor = json.load(stream)
+    except FileNotFoundError:
+        return []
+    except json.JSONDecodeError as exc:
+        print(f"Warning: descriptor.json could not be parsed ({exc}); ignoring parameter metadata.")
+        return []
+    inputs = descriptor.get("inputs", [])
+    if not isinstance(inputs, list):
+        return []
+    return inputs
 
 
 @dataclass
@@ -208,6 +226,42 @@ def _parse_args(argv: Sequence[str]) -> argparse.Namespace:
         action="store_true",
         help="Compatibility flag ignored by the local runner.",
     )
+
+    for param in _load_descriptor_inputs():
+        flag = param.get("command-line-flag")
+        if not flag:
+            continue
+        dest = param.get("id") or flag.lstrip("-").replace("-", "_")
+        aliases = [flag]
+        if flag.startswith("--"):
+            underscore_variant = "--" + flag[2:].replace("-", "_")
+            if underscore_variant not in aliases:
+                aliases.append(underscore_variant)
+        default_value = param.get("default-value")
+        is_optional = param.get("optional", True)
+        arg_kwargs = {
+            "dest": dest,
+            "default": default_value,
+            "required": not is_optional,
+            "help": param.get("description"),
+        }
+        param_type = (param.get("type") or "String").lower()
+        if param_type == "boolean":
+            arg_kwargs["type"] = _parse_bool
+        elif param_type == "number":
+            if isinstance(default_value, bool):
+                arg_kwargs["type"] = _parse_bool
+            elif isinstance(default_value, int):
+                arg_kwargs["type"] = int
+            else:
+                arg_kwargs["type"] = float
+        else:
+            arg_kwargs["type"] = str
+        try:
+            parser.add_argument(*aliases, **arg_kwargs)
+        except argparse.ArgumentError:
+            continue
+
     parsed = parser.parse_args(argv)
     return parsed
 
