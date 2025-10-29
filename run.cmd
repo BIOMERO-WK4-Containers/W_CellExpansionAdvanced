@@ -4,7 +4,7 @@ setlocal
 set "DATA_PATH=%~dp0"
 if "%DATA_PATH:~-1%"=="\" set "DATA_PATH=%DATA_PATH:~0,-1%"
 
-if "%IMAGE%"=="" set "IMAGE=cellexpansionadvanced:latest"
+if "%IMAGE%"=="" set "IMAGE=w_cellexpansionadvanced:latest"
 
 docker run --rm ^
 	-v "%DATA_PATH%\infolder:/data/in" ^
