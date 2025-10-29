@@ -262,7 +262,9 @@ def _parse_args(argv: Sequence[str]) -> argparse.Namespace:
         except argparse.ArgumentError:
             continue
 
-    parsed = parser.parse_args(argv)
+    parsed, unknown = parser.parse_known_args(argv)
+    if unknown:
+        setattr(parsed, "_unknown_args", unknown)
     return parsed
 
 def _parse_bool(value):
