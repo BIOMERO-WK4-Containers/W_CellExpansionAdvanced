@@ -1,11 +1,11 @@
 {
   "name": "CellExpansionAdvanced",
-  "description": "2D Cell Expansion of Nuceli Annotations with advanced options",
+  "description": "2D Cell expansion of nuclei annotations with paired intensity images (name.tif + name_nuclei_mask.tif) and advanced options",
   "container-image": {
     "image": "cellularimagingcf/w_cellexpansionadvanced",
     "type": "singularity"
   },
-  "command-line": "python wrapper.py --max-pixels @max_pixels --discard-cells-without-cytoplasm @discard_cells_without_cytoplasm",
+  "command-line": "python wrapper.py --max-pixels @max_pixels --discard-cells-without-cytoplasm @discard_cells_without_cytoplasm --nuclei-channel @nuclei_channel",
   "inputs": [
     {
       "id": "max_pixels",
@@ -28,6 +28,17 @@
       "set-by-server": false,
       "optional": true,
       "type": "Boolean"
+    },
+    {
+      "id": "nuclei_channel",
+      "value-key": "@nuclei_channel",
+      "command-line-flag": "--nuclei-channel",
+      "name": "Nuclei channel index",
+      "description": "Zero-based index of the intensity image channel corresponding to nuclei.",
+      "default-value": 0,
+      "set-by-server": false,
+      "optional": true,
+      "type": "Number"
     }
   ],
 

@@ -1,5 +1,5 @@
 @echo off
-setlocal 
+setlocal
 
 if "%~1"=="" (
     echo Usage: pushdocker TAG
@@ -8,9 +8,23 @@ if "%~1"=="" (
 )
 
 set "TAG=%~1"
-set "IMAGE_NAMESPACE=cellularimagingcf"
-set "IMAGE_NAME=w_cellexpansionadvanced"
-set "FULL_IMAGE=%IMAGE_NAMESPACE%/%IMAGE_NAME%"
+
+set "SCRIPT_DIR=%~dp0"
+if "%SCRIPT_DIR:~-1%"=="\" set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
+
+for /f %%I in ('powershell -NoProfile -Command "(Split-Path -Leaf '%SCRIPT_DIR%').ToLower()"') do set "DERIVED_IMAGE_NAME=%%I"
+
+if not defined DERIVED_IMAGE_NAME (
+    for %%I in ("%SCRIPT_DIR%") do set "DERIVED_IMAGE_NAME=%%~nI"
+)
+
+if not defined IMAGE_NAME set "IMAGE_NAME=%DERIVED_IMAGE_NAME%"
+if not defined IMAGE_NAMESPACE set "IMAGE_NAMESPACE=cellularimagingcf"
+if "%IMAGE_NAMESPACE%"=="" (
+    set "FULL_IMAGE=%IMAGE_NAME%"
+) else (
+    set "FULL_IMAGE=%IMAGE_NAMESPACE%/%IMAGE_NAME%"
+)
 
 REM Tag specific version
 if not "%~2"=="--skip-build" (
