@@ -1,6 +1,7 @@
 import os
 import shutil
 import sys
+from pathlib import Path
 from types import SimpleNamespace
 
 import imageio.v2 as imageio
@@ -16,25 +17,55 @@ from pyCellExpansionAdvanced import CellExpansion
 
 
 def _derive_output_filename(original_filename: str, label_name: str) -> str:
-    """Create an output filename by replacing the Nuclei token when present."""
-    if "Nuclei" in original_filename:
-        return original_filename.replace("Nuclei", label_name)
-    name, ext = os.path.splitext(original_filename)
-    return f"{name}_{label_name}{ext}"
+    """Return original base filename with a label-specific suffix."""
+    suffix_map = {
+        "Cells": "_cell_labels.tif",
+        "NucleiLabels": "_nuclei_labels.tif",
+        "Cytoplasm": "_cytoplasm_labels.tif",
+    }
+
+    try:
+        suffix = suffix_map[label_name]
+    except KeyError as exc:  # guard against unexpected label names
+        raise ValueError(f"Unknown label name '{label_name}'") from exc
+
+    suffixes = "".join(Path(original_filename).suffixes)
+    stem = original_filename[: -len(suffixes)] if suffixes else original_filename
+    return f"{stem}{suffix}"
 
 
-def _clear_directory(directory: str) -> None:
-    """Remove all content inside directory without deleting the directory itself."""
-    if not os.path.isdir(directory):
+def _clear_directory(directory: str, *, remove_root: bool = False) -> None:
+    """Remove all content inside directory and optionally delete the directory."""
+    path = Path(directory)
+    if not path.is_dir():
         return
-    for entry in os.scandir(directory):
+
+    if remove_root:
         try:
-            if entry.is_dir(follow_symlinks=False):
-                shutil.rmtree(entry.path, ignore_errors=True)
+            shutil.rmtree(path)
+        except OSError as exc:
+            print(f"Warning: could not remove directory {directory}: {exc}")
+        return
+
+    for entry in path.iterdir():
+        try:
+            if entry.is_dir():
+                shutil.rmtree(entry, ignore_errors=True)
             else:
-                os.remove(entry.path)
+                entry.unlink()
         except OSError as exc:  # keep going if a file is busy
-            print(f"Warning: could not remove {entry.path}: {exc}")
+            print(f"Warning: could not remove {entry}: {exc}")
+
+
+def _remove_if_empty(directory: str) -> None:
+    """Attempt to remove directory if it exists and is empty."""
+    path = Path(directory)
+    if not path.is_dir():
+        return
+    try:
+        path.rmdir()
+    except OSError:
+        pass
 
 
 def _require_parameter(params: SimpleNamespace, name: str):
@@ -112,8 +143,8 @@ def main(argv):
                     print(
                         f"Warning: expected {label_name} mask missing for {bimg.filename}"
                     )
-
-        _clear_directory(tmp_path)
+        _clear_directory(tmp_path, remove_root=True)
+        _remove_if_empty(os.path.dirname(tmp_path))
         print("Finished.")
 
 
