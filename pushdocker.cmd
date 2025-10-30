@@ -1,5 +1,5 @@
 @echo off
-setlocal
+setlocal 
 
 if "%~1"=="" (
     echo Usage: pushdocker TAG
